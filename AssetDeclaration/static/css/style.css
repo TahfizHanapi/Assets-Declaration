@@ -1,0 +1,144 @@
+body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5; /* Brighter background color */
+        }
+
+        .dashboard-container {
+            display: flex;
+        }
+
+        .side-navigation {
+            width: 200px;
+            height: 100vh;
+            background-image: url("../static/images/background.jpg");
+            color: #fff;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .side-navigation h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .side-navigation ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .side-navigation li {
+            margin-bottom: 5px;
+        }
+
+        .side-navigation a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .side-navigation a:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white background on hover */
+        }
+
+        .logo {
+            width: 200px; /* Adjust the width as needed */
+            height: auto; /* Maintain the aspect ratio */
+            margin-bottom: 5px; /* Add some spacing below the logo */
+        }
+
+        .transparent-box {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white background */
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 5px; /* Adjusted margin for better spacing */
+        }
+
+        .separator {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white line */
+            margin: 10px 0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-card {
+            background-color: #fff; /* White background */
+            color: #333; /* Dark text color */
+            padding: 30px;
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            width: 70%; /* Adjusted width for better visibility */
+            max-width: 600px; /* Set maximum width */
+        }
+
+        .top-navigation {
+            width: 100%;
+            padding: 10px;
+            background-image: url("../static/images/nav bg.jpg");
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            color: #fff;
+        }
+
+        .top-navigation a,
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px;
+            margin: 0 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .top-navigation a:hover,
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white background on hover */
+        }
+
+        .logout-btn {
+            margin-left: auto;
+        }
+
+        .dashboard-card h2 {
+            text-align: center;
+            margin-bottom: 20px; /* Increased margin for better spacing */
+            font-size: 24px; /* Increased font size for better visibility */
+        }
+
+        .dashboard-card form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-card label,
+        .dashboard-card input,
+        .dashboard-card select,
+        .dashboard-card button {
+            margin-bottom: 10px; /* Increased margin for better spacing */
+        }
+
+        .dashboard-card button {
+            background-color: #007BFF; /* Blue button color */
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .dashboard-card button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
