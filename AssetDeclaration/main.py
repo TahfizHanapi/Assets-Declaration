@@ -16,7 +16,7 @@ from wtforms.validators import DataRequired
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '1234',
+    'password': 'Azib_2002',
     'database': 'assets'
 }
 
@@ -53,9 +53,21 @@ class PendingAsset(db.Model):
     # Ensure that the routes for approving and rejecting assets are defined and reachable
     print(app.url_map)
 
-    # Double-check the JavaScript functions to ensure they correctly send requests to the server
-    # and handle the responses
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'asset_name': self.asset_name,
+            'asset_type': self.asset_type,
+            'serial_number': self.serial_number,
+            'location': self.location,
+            'purchase_date': str(self.purchase_date),
+            'quantity': self.quantity,
+            'value': self.value,
+            'status': self.status,
+        }
 
+        def get_asset_by_id(cls, asset_id):
+            return cls.query.get(asset_id)
 
 # Set the secret key for the application using the app.secret_key attribute
 app.secret_key = secrets.token_hex(16)
@@ -144,8 +156,23 @@ def dashboard():
 
 @app.route('/view_assets')
 def view_assets():
+    # Fetch all approved assets from the database
     approved_assets = PendingAsset.query.filter_by(status='Approved').all()
+
     return render_template('view_assets.html', approved_assets=approved_assets)
+
+
+@app.route('/view_asset/<int:asset_id>')
+def view_asset(asset_id):
+    # Retrieve the asset from the database based on its ID
+    asset = PendingAsset.get_asset_by_id(asset_id)
+
+    # Check if the asset exists
+    if asset:
+        return render_template('view_asset.html', asset=asset)
+    else:
+        flash('Asset not found.', 'danger')
+        return redirect(url_for('view_assets'))
 
 @app.route('/delete_asset', methods=['POST'])
 def delete_asset():
@@ -260,24 +287,27 @@ def assetApproval():
 
 @app.route('/approve_asset', methods=['POST'])
 def approve_asset():
+    print('HEll')
     asset_id = request.json.get('asset_id')
+    print('Received asset ID:', asset_id)  # Add this line for debugging
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
             asset.status = 'Approved'
-            db.session.commit()  # Commit changes to the database
-            return jsonify({'success': True}), 200
+            db.session.commit()
+            return jsonify({'success': True, 'asset': asset.to_dict()}), 200
     return jsonify({'success': False}), 400
 
 @app.route('/reject_asset', methods=['POST'])
 def reject_asset():
     asset_id = request.json.get('asset_id')
+    print('Received asset ID:', asset_id)  # Add this line for debugging
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
             asset.status = 'Rejected'
-            db.session.commit()  # Commit changes to the database
-            return jsonify({'success': True}), 200
+            db.session.commit()
+            return jsonify({'success': True, 'asset': asset.to_dict()}), 200
     return jsonify({'success': False}), 400
 
 

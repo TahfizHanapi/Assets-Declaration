@@ -7,25 +7,18 @@
 // Scripts
 // 
 
-window.addEventListener('DOMContentLoaded', event => {
-
+document.addEventListener('DOMContentLoaded', function () {
     // Toggle the side navigation
     const sidebarToggle = document.body.querySelector('#sidebarToggle');
     if (sidebarToggle) {
-        // Uncomment Below to persist sidebar toggle between refreshes
-        // if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-        //     document.body.classList.toggle('sb-sidenav-toggled');
-        // }
         sidebarToggle.addEventListener('click', event => {
             event.preventDefault();
             document.body.classList.toggle('sb-sidenav-toggled');
             localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
         });
     }
-// Your existing scripts (unchanged)
 
-// New script for User-Admin-Approval functionality
-// (you can include this in the existing scripts.js file or use a separate file)
+    // New script for User-Admin-Approval functionality
     function loadUserApprovalData() {
         // This function should contain the same code as the one in user_admin_approval.html
         // to fetch and display user data for approval
@@ -44,4 +37,50 @@ window.addEventListener('DOMContentLoaded', event => {
         // ...
     }
 
+    // Function to handle asset action (approve/reject)
+    function handleAssetAction(assetId, action) {
+        console.log(`${action} button clicked for asset ID: ${assetId}`);
+
+        // Send a request to perform the asset action
+        fetch(`/${action}_asset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ asset_id: assetId }),
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log(`Asset ${action}ed successfully`);
+                // You can update the UI here if needed
+            } else {
+                console.error(`Error ${action}ing asset:`, response.statusText);
+                // Handle the error appropriately
+            }
+        })
+        .catch(error => {
+            console.error(`Error ${action}ing asset:`, error);
+            // Handle the error appropriately
+        });
+    }
+
+    // Get all approve and reject buttons
+    const actionButtons = document.querySelectorAll('.approve-btn, .reject-btn');
+
+    // Add click event listener to each action button
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            // Get the asset ID from the data-id attribute
+            const assetId = this.getAttribute('data-id');
+
+            // Determine the action based on the button's class
+            const action = this.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+            // Handle the asset action
+            handleAssetAction(assetId, action);
+        });
+    });
+
+    // Load user approval data when the page is loaded
+    loadUserApprovalData();
 });

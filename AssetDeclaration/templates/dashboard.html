@@ -155,7 +155,7 @@
 </head>
 
 <div class="top-navigation">
-    <a href="{{ url_for('login') }}" class="logout-btn">Logout</a>
+     <a href="#" class="logout-btn" onclick="logout()">Logout</a>
 </div>
 
 <body class="dashboard">
@@ -219,6 +219,14 @@
             </div>
         </div>
     </div>
+
+<script>
+    function logout() {
+        // Use JavaScript to redirect to the logout URL
+        window.location.href = "{{ url_for('logout') }}";
+    }
+</script>
+
 </body>
 </html>
 

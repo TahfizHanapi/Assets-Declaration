@@ -3,138 +3,147 @@
 {% block content %}
 
 <div class="container-fluid px-4">
-        <h1 class="mt-4">User-Admin-Approval</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item active">User-Admin-Approval</li>
-        </ol>
-        <!-- Approval Table -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-table me-1"></i>
-                User Approval
-            </div>
-            <div class="card-body">
-                <table id="approvalTable" class="table">
-                    <!-- Table header -->
-                    <thead>
+    <h1 class="mt-4">User-Admin-Approval</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">User-Admin-Approval</li>
+    </ol>
+    <!-- Approval Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            User Approval
+        </div>
+        <div class="card-body">
+            <table id="approvalTable" class="table">
+                <!-- Table header -->
+                <thead>
+                <tr>
+                    <th>Asset Name</th>
+                    <th>Asset Type</th>
+                    <th>Serial Number</th>
+                    <th>Location</th>
+                    <th>Purchase Date</th>
+                    <th>Quantity</th>
+                    <th>Value (RM)</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <!-- Table body (populated dynamically) -->
+                <tbody id="approvalTableBody">
+                {% for asset in pending_assets %}
                     <tr>
-                        <th>Asset Name</th>
-                        <th>Asset Type</th>
-                        <th>Serial Number</th>
-                        <th>Location</th>
-                        <th>Purchase Date</th>
-                        <th>Quantity</th>
-                        <th>Value (RM)</th>
-                        <th>Action</th>
+                        <td>{{ asset.asset_name }}</td>
+                        <td>{{ asset.asset_type }}</td>
+                        <td>{{ asset.serial_number }}</td>
+                        <td>{{ asset.location }}</td>
+                        <td>{{ asset.purchase_date }}</td>
+                        <td>{{ asset.quantity }}</td>
+                        <td>{{ asset.value }}</td>
+                        <td>
+                            <button class="approve-btn" data-id="{{ asset.id }}">Approve</button>
+                        </td>
+                        <td>
+                            <button class="reject-btn" data-id="{{ asset.id }}">Reject</button>
+                        </td>
                     </tr>
-                    </thead>
-                    <!-- Table body (populated dynamically) -->
-                    <tbody id="approvalTableBody">
-                    {% for asset in pending_assets %}
-                        <tr>
-                            <td>{{ asset.asset_name }}</td>
-                            <td>{{ asset.asset_type }}</td>
-                            <td>{{ asset.serial_number }}</td>
-                            <td>{{ asset.location }}</td>
-                            <td>{{ asset.purchase_date }}</td>
-                            <td>{{ asset.quantity }}</td>
-                            <td>{{ asset.value }}</td>
-                            <td>
-                                <button class="approve-btn" data-id="{{ asset.id }}">Approve</button>
-                            </td>
-                            <td>
-                                <button class="reject-btn" data-id="{{ asset.id }}">Reject</button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Modal for displaying messages -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Action Result</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messageModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
-
-{% endblock %}
+    </div>
+</div>
 
 <!-- Bootstrap and other scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='assets/demo/chart-area-demo.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/demo/chart-bar-demo.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"
-        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/datatables-simple-demo.js') }}"></script>
 
 <!-- Script for User-Admin-Approval functionality -->
 <script>
- document.addEventListener('DOMContentLoaded', function () {
-    // Get all approve buttons
-    const approveButtons = document.querySelectorAll('.approve-btn');
+document.addEventListener('DOMContentLoaded', function () {
+    // Function to handle asset action (approve/reject)
+    const handleAssetAction = (assetId, action) => {
+        console.log(`${action} button clicked for asset ID: ${assetId}`);
 
-    // Add click event listener to each approve button
-    approveButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            // Get the asset ID from the data-id attribute
-            const assetId = this.getAttribute('data-id');
-
-            // Send a request to approve the asset
-            fetch('/approve_asset', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ asset_id: assetId }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Optionally update UI to reflect approval
-                    console.log('Asset approved successfully');
-                    // You can update the UI here if needed
-                } else {
-                    console.error('Error approving asset:', response.statusText);
-                    // Handle the error appropriately
-                }
-            })
-            .catch(error => {
-                console.error('Error approving asset:', error);
+        // Send a request to perform the asset action
+        fetch(`/${action}_asset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ asset_id: assetId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(`Asset ${action}ed successfully`);
+                // Display a Bootstrap modal with the success message
+                displayModal(`Asset has been ${action}ed!`);
+                // You can update the UI here if needed
+            } else {
+                console.error(`Error ${action}ing asset:`, data.error || 'Unknown error');
+                // Display a Bootstrap modal with the error message
+                displayModal(`Error ${action}ing asset: ${data.error || 'Unknown error'}`);
                 // Handle the error appropriately
-            });
+            }
+        })
+        .catch(error => {
+            console.error(`Error ${action}ing asset:`, error);
+            // Display a Bootstrap modal with the error message
+            displayModal(`Error ${action}ing asset: ${error}`);
+            // Handle the error appropriately
         });
-    });
+    };
 
-    // Get all reject buttons
-    const rejectButtons = document.querySelectorAll('.reject-btn');
+    // Function to display a Bootstrap modal with a message
+    const displayModal = (message) => {
+        const messageModal = new bootstrap.Modal(document.getElementById('messageModal'), {
+            keyboard: false,
+            backdrop: 'static'
+        });
+        const modalBody = document.getElementById('messageModalBody');
+        modalBody.innerHTML = message;
+        messageModal.show();
+    };
 
-    // Add click event listener to each reject button
-    rejectButtons.forEach(button => {
+    // Get all approve and reject buttons
+    const actionButtons = document.querySelectorAll('.approve-btn, .reject-btn');
+
+    // Add click event listener to each action button
+    actionButtons.forEach(button => {
         button.addEventListener('click', function () {
             // Get the asset ID from the data-id attribute
             const assetId = this.getAttribute('data-id');
 
-            // Send a request to reject the asset
-            fetch('/reject_asset', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ asset_id: assetId }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Optionally update UI to reflect rejection
-                    console.log('Asset rejected successfully');
-                    // You can update the UI here if needed
-                } else {
-                    console.error('Error rejecting asset:', response.statusText);
-                    // Handle the error appropriately
-                }
-            })
-            .catch(error => {
-                console.error('Error rejecting asset:', error);
-                // Handle the error appropriately
-            });
+            // Determine the action based on the button's class
+            const action = this.classList.contains('approve-btn') ? 'approve' : 'reject';
+
+            // Handle the asset action
+            handleAssetAction(assetId, action);
         });
     });
 });
-
 </script>
+</div>
+
+{% endblock %}
