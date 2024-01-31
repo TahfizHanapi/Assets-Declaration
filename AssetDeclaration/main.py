@@ -35,6 +35,11 @@ class User(db.Model):
     email = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    emailadmin = db.Column(db.String(50), unique=True, nullable=False)
+    passwordadmin = db.Column(db.String(255), nullable=False)
+
 
 class PendingAsset(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -68,11 +73,8 @@ with app.app_context():
 
 def is_logged_in():
     return 'user_id' in session
-
-def get_current_user():
-    if is_logged_in():
-        return User.query.get(session['user_id'])
-
+def admin_logged_in():
+    return 'admin_id' in session
 @app.route('/')
 def landing():
     return render_template("land.html")
@@ -103,10 +105,6 @@ def login():
         if not recaptcha_result['success']:
             return render_template('login.html', message='Failed reCAPTCHA verification.')
 
-        # Continue with your existing login logic
-        email = request.form.get('email')
-        password = request.form.get('password')
-
         email = request.form.get('email')
         password = request.form.get('password')
 
@@ -129,13 +127,42 @@ def login():
         return redirect(url_for('dashboard'))
     return render_template('login.html')
 
+@app.route('/adminlogin', methods=['GET', 'POST'])
+def adminlogin():
+    # If the admin is already logged in, redirect to the index page
+    if admin_logged_in():
+        return redirect(url_for('index'))
 
-# @app.route('/register', methods=['GET', 'POST'])
-# def register():
-#
+    # If the request method is POST, get the form data and validate it
+    if request.method == 'POST':
+        email = request.form.get('emailadmin')
+        password = request.form.get('passwordadmin')
+
+        # Check if the email and password are not empty
+        if not email or not password:
+            flash('Please fill in all the fields.', 'error')
+            return redirect(url_for('adminlogin'))
+
+        # Query the database to find the admin by email
+        admin = Admin.query.filter_by(emailadmin=email).first()
+
+        # Check if the admin exists and the password is correct
+        if admin and check_password_hash(admin.passwordadmin, password):
+            # Store the admin id in the session and redirect to the index page
+            session['admin_id'] = admin.id
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid email or password.', 'error')
+            return redirect(url_for('adminlogin'))
+
+    return render_template('login.html')
+
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+
+    user_name = session.get('name')
+
     if request.method == 'POST':
         # Existing code for handling form data
         name = request.form['asset_name']
@@ -160,13 +187,16 @@ def dashboard():
         db.session.commit()
         flash('Asset registration application submitted successfully!')
         return redirect(url_for('dashboard'))
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', user_name=user_name)
 
 
 @app.route('/view_assets')
 def view_assets():
+
+    user_name = session.get('name')
+
     approved_assets = PendingAsset.query.filter_by(status='Approved').all()
-    return render_template('view_assets.html', approved_assets=approved_assets)
+    return render_template('view_assets.html', approved_assets=approved_assets, user_name=user_name)
 
 @app.route('/delete_asset', methods=['POST'])
 def delete_asset():

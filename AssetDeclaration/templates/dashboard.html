@@ -151,11 +151,13 @@
         .dashboard-card button:hover {
             background-color: #0056b3; /* Darker blue on hover */
         }
+
     </style>
 </head>
 
 <div class="top-navigation">
-     <a href="#" class="logout-btn" onclick="logout()">Logout</a>
+    <div class="top"><span>{{ user_name }}</span></div>
+    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
 </div>
 
 <body class="dashboard">

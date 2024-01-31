@@ -25,14 +25,29 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Example: Add box shadow */
         }
 
-        .log{
+        .log {
             color: #1C2369;
         }
 
-        .log1{
+        .log1 {
             color: #1C2369;
-            margin-bottom: 40px;
+            margin-top: 0px;
         }
+
+        .highlighted-word {
+        background-color: #E2B520;
+        border: none;
+        color: #1C2369;
+        border-radius: 70px;
+        padding: 10px;
+    }
+    .user-word {
+        background-color: #E2B520;
+        border: none;
+        color: #1C2369;
+        border-radius: 70px;
+        padding: 10px;
+    }
 
     </style>
 </head>
@@ -45,7 +60,10 @@
         <div class="row full-height justify-content-center">
             <div class="col-12 text-center align-self-center py-5">
                 <div class="section pb-5 pt-5 pt-sm-2 text-center">
-                    <h6 class="mb-0 pb-3 log"><span>User </span><span>Admin</span></h6>
+                    <h6 class="mb-0 pb-3 user">
+                        <span class="highlighted-word">User</span>
+                        <span class="user-word">Admin</span>
+                    </h6>
                     <input class="checkbox" type="checkbox" id="reg-log" name="reg-log"/>
                     <label for="reg-log"></label>
                     <div class="card-3d-wrap mx-auto">
@@ -120,6 +138,7 @@
             // The reCAPTCHA response is valid, allow form submission
             return true;
         }
+
 
 </script>
 </body>
