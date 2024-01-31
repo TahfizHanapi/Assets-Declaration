@@ -1,6 +1,7 @@
 import secrets
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, escape
+from markupsafe import escape
 import mysql.connector
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
@@ -13,7 +14,7 @@ from wtforms.validators import DataRequired
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '1234',
+    'password': 'root',
     'database': 'assets'
 }
 
@@ -28,7 +29,6 @@ bcrypt = Bcrypt(app)
 
 users = {}
 
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -39,7 +39,6 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     emailadmin = db.Column(db.String(50), unique=True, nullable=False)
     passwordadmin = db.Column(db.String(255), nullable=False)
-
 
 class PendingAsset(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,27 +51,15 @@ class PendingAsset(db.Model):
     value = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='Pending')
 
-    # Ensure that the routes for approving and rejecting assets are defined and reachable
-    print(app.url_map)
-
-    # Double-check the JavaScript functions to ensure they correctly send requests to the server
-    # and handle the responses
-
-
-# Set the secret key for the application using the app.secret_key attribute
 app.secret_key = secrets.token_hex(16)
-
-# Alternatively, you can set the secret key using the app.config['SECRET_KEY'] dictionary
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 
-# Set up an application context with app.app_context()
 with app.app_context():
-    # Create the database tables by calling the db.create_all() method
     db.create_all()
-
 
 def is_logged_in():
     return 'user_id' in session
+
 def admin_logged_in():
     return 'admin_id' in session
 @app.route('/')
@@ -87,6 +74,9 @@ def login():
 
     # If the request method is POST, get the form data and validate it
     if request.method == 'POST':
+        email = escape(request.form.get('email'))
+        password = escape(request.form.get('password'))
+
         # Validate the reCAPTCHA response
         recaptcha_response = request.form.get('g-recaptcha-response')
         if not recaptcha_response:
@@ -104,9 +94,6 @@ def login():
 
         if not recaptcha_result['success']:
             return render_template('login.html', message='Failed reCAPTCHA verification.')
-
-        email = request.form.get('email')
-        password = request.form.get('password')
 
         # Check if the email and password are not empty
         if not email or not password:
@@ -135,8 +122,8 @@ def adminlogin():
 
     # If the request method is POST, get the form data and validate it
     if request.method == 'POST':
-        email = request.form.get('emailadmin')
-        password = request.form.get('passwordadmin')
+        email = escape(request.form.get('emailadmin'))
+        password = escape(request.form.get('passwordadmin'))
 
         # Check if the email and password are not empty
         if not email or not password:
@@ -158,6 +145,7 @@ def adminlogin():
     return render_template('login.html')
 
 
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
 
@@ -165,13 +153,13 @@ def dashboard():
 
     if request.method == 'POST':
         # Existing code for handling form data
-        name = request.form['asset_name']
-        asset_type = request.form['asset_type']
-        serial_number = request.form['serial_number']
-        location = request.form['location']
-        purchase_date = request.form['purchase_date']
-        quantity = int(request.form['quantity'])
-        value = float(request.form['value'])
+        name = escape(request.form['asset_name'])
+        asset_type = escape(request.form['asset_type'])
+        serial_number = escape(request.form['serial_number'])
+        location = escape(request.form['location'])
+        purchase_date = escape(request.form['purchase_date'])
+        quantity = int(escape(request.form['quantity']))
+        value = float(escape(request.form['value']))
 
         # Create a new pending asset application
         pending_asset = PendingAsset(
@@ -233,10 +221,10 @@ def logout():
 def newUser():
     # If the request method is POST, get the form data and validate it
     if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm = request.form.get('confirm')
+        name = escape(request.form.get('name'))
+        email = escape(request.form.get('email'))
+        password = escape(request.form.get('password'))
+        confirm = escape(request.form.get('confirm'))
 
         # Check if the name, email, and password are not empty
         if not name or not email or not password:
@@ -294,8 +282,11 @@ def assetApproval():
     form = ApplyAssetForm()
     if form.validate_on_submit():
         # Create a new PendingAsset object based on the form data
+        name = escape(form.name.data)
+        # Add other attributes based on the form fields
+
         pending_asset = PendingAsset(
-            asset_name=form.name.data,
+            asset_name=name,
             # Add other attributes based on the form fields
         )
         db.session.add(pending_asset)
@@ -311,7 +302,7 @@ def assetApproval():
 
 @app.route('/approve_asset', methods=['POST'])
 def approve_asset():
-    asset_id = request.json.get('asset_id')
+    asset_id = escape(request.json.get('asset_id'))
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
@@ -322,7 +313,7 @@ def approve_asset():
 
 @app.route('/reject_asset', methods=['POST'])
 def reject_asset():
-    asset_id = request.json.get('asset_id')
+    asset_id = escape(request.json.get('asset_id'))
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
