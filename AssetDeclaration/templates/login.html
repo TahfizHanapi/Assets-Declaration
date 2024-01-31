@@ -1,12 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Webleb</title>
+    <title>EasyMath</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/uum logo.png"/>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="../static/css/login.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+    <style>
+        body {
+            background-image: url("../static/images/loginbg.png");
+            background-size: cover;
+        }
+
+        .g-recaptcha {
+
+            margin-top: 20px; /* Example: Increase top margin */
+            border-radius: 10px; /* Example: Add border radius */
+            margin-left: 10%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Example: Add box shadow */
+        }
+
+        .log{
+            color: #1C2369;
+        }
+
+        .log1{
+            color: #1C2369;
+            margin-bottom: 40px;
+        }
+
+    </style>
 </head>
 <body>
 <div id="stars"></div>
@@ -17,7 +45,7 @@
         <div class="row full-height justify-content-center">
             <div class="col-12 text-center align-self-center py-5">
                 <div class="section pb-5 pt-5 pt-sm-2 text-center">
-                    <h6 class="mb-0 pb-3"><span>User </span><span>Admin</span></h6>
+                    <h6 class="mb-0 pb-3 log"><span>User </span><span>Admin</span></h6>
                     <input class="checkbox" type="checkbox" id="reg-log" name="reg-log"/>
                     <label for="reg-log"></label>
                     <div class="card-3d-wrap mx-auto">
@@ -25,8 +53,8 @@
                             <div class="card-front">
                                 <div class="center-wrap">
                                     <div class="section text-center">
-                                        <h4 class="mb-4 pb-3">Log In</h4>
-                                        <form method="POST" action="/">
+                                        <h4 class="mb-4 pb-3 log">Log In</h4>
+                                        <form method="POST" action="/login" onsubmit="return validateRecaptcha()">
                                             <!-- Update action attribute to point to the correct route -->
                                             <div class="form-group">
                                                 <label for="email"></label>
@@ -40,19 +68,20 @@
                                                        placeholder="Password" name="password" required>
                                                 <i class="input-icon uil uil-lock-alt"></i>
                                             </div>
+
+                                            <div class="g-recaptcha"
+                                                 data-sitekey="6Ld-imEpAAAAADDMV3TAxyvPIsa0_k1jgD_hdza5"></div>
+
                                             <button type="submit" class="btn mt-4">Login</button>
                                         </form>
 
-                                        <p class="mb-0 mt-4 text-center"><a href="{{ url_for('register') }}"
-                                                                            class="link">Don't have acoount? Register
-                                            Here!</a></p>
                                     </div>
                                 </div>
                             </div>
                             <div class="card-back">
                                 <div class="center-wrap">
                                     <div class="section text-center">
-                                        <h4 class="mb-3 pb-3">Log In</h4>
+                                        <h4 class="mb-3 pb-3 log1">Log In</h4>
                                         <div class="form-group">
                                             <label for="username"></label><input class="form-style" type="text"
                                                                                  name="username" placeholder="username"
@@ -76,5 +105,22 @@
         </div>
     </div>
 </div>
+
+<script>
+    function validateRecaptcha() {
+            // Get the reCAPTCHA response
+            var recaptchaResponse = grecaptcha.getResponse();
+
+            // Check if the response is empty (indicating the reCAPTCHA is not solved)
+            if (recaptchaResponse.length === 0) {
+                alert("Please complete the reCAPTCHA to proceed.");
+                return false; // Prevent form submission
+            }
+
+            // The reCAPTCHA response is valid, allow form submission
+            return true;
+        }
+
+</script>
 </body>
 </html>

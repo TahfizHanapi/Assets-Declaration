@@ -202,21 +202,22 @@
 
     <div class="main-content">
         <div class="dashboard-card">
-            <h1>Approved Assets</h1>
-            <table>
+            <h2>Registered Assets</h2>
+
+            <table class="asset-table">
                 <thead>
-                <tr>
-                    <th>Asset Name</th>
-                    <th>Asset Type</th>
-                    <th>Serial Number</th>
-                    <th>Location</th>
-                    <th>Purchase Date</th>
-                    <th>Quantity</th>
-                    <th>Value (RM)</th>
-                </tr>
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Asset Type</th>
+                        <th>Serial Number</th>
+                        <th>Location</th>
+                        <th>Purchase Date</th>
+                        <th>Quantity</th>
+                        <th>Value (RM)</th>
+                    </tr>
                 </thead>
-                <tbody>
-                {% for asset in approved_assets %}
+                <tbody id="pendingAssetsTableBody">
+                    {% for asset in approved_assets %}
                     <tr>
                         <td>{{ asset.asset_name }}</td>
                         <td>{{ asset.asset_type }}</td>
@@ -226,16 +227,15 @@
                         <td>{{ asset.quantity }}</td>
                         <td>{{ asset.value }}</td>
                     </tr>
-                {% endfor %}
+                    {% endfor %}
                 </tbody>
             </table>
-        </div>
 
-        <div class="register-btn-container">
-            <a href="{{ url_for('dashboard') }}" class="register-btn">+ New Asset</a>
+            <div class="register-btn-container">
+                <a href="{{ url_for('dashboard') }}" class="register-btn">+ New Asset</a>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 </body>

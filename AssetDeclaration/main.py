@@ -1,14 +1,11 @@
 import secrets
-
+import requests
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import mysql.connector
 from flask_wtf import FlaskForm
-from mysql.connector import connect
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
-
 from wtforms import SubmitField, StringField, TextAreaField
 from wtforms.validators import DataRequired
 
@@ -16,7 +13,7 @@ from wtforms.validators import DataRequired
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Azib_2002',
+    'password': '1234',
     'database': 'assets'
 }
 
@@ -53,21 +50,9 @@ class PendingAsset(db.Model):
     # Ensure that the routes for approving and rejecting assets are defined and reachable
     print(app.url_map)
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'asset_name': self.asset_name,
-            'asset_type': self.asset_type,
-            'serial_number': self.serial_number,
-            'location': self.location,
-            'purchase_date': str(self.purchase_date),
-            'quantity': self.quantity,
-            'value': self.value,
-            'status': self.status,
-        }
+    # Double-check the JavaScript functions to ensure they correctly send requests to the server
+    # and handle the responses
 
-        def get_asset_by_id(cls, asset_id):
-            return cls.query.get(asset_id)
 
 # Set the secret key for the application using the app.secret_key attribute
 app.secret_key = secrets.token_hex(16)
@@ -88,9 +73,11 @@ def get_current_user():
     if is_logged_in():
         return User.query.get(session['user_id'])
 
+@app.route('/')
+def landing():
+    return render_template("land.html")
 
-# Define the route for the login page
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     # If the user is already logged in, redirect to the main page
     if is_logged_in():
@@ -98,6 +85,28 @@ def login():
 
     # If the request method is POST, get the form data and validate it
     if request.method == 'POST':
+        # Validate the reCAPTCHA response
+        recaptcha_response = request.form.get('g-recaptcha-response')
+        if not recaptcha_response:
+            return render_template('login.html', message='Please complete the reCAPTCHA.')
+
+        # Verify the reCAPTCHA response with Google
+        recaptcha_secret_key = '6Ld-imEpAAAAABc3XPYm8uxYQghQz-Sv3LwVGf9h'  # Replace with your actual secret key
+        recaptcha_url = 'https://www.google.com/recaptcha/api/siteverify'
+        recaptcha_data = {
+            'secret': recaptcha_secret_key,
+            'response': recaptcha_response,
+        }
+        recaptcha_verification = requests.post(recaptcha_url, data=recaptcha_data)
+        recaptcha_result = recaptcha_verification.json()
+
+        if not recaptcha_result['success']:
+            return render_template('login.html', message='Failed reCAPTCHA verification.')
+
+        # Continue with your existing login logic
+        email = request.form.get('email')
+        password = request.form.get('password')
+
         email = request.form.get('email')
         password = request.form.get('password')
 
@@ -156,23 +165,8 @@ def dashboard():
 
 @app.route('/view_assets')
 def view_assets():
-    # Fetch all approved assets from the database
     approved_assets = PendingAsset.query.filter_by(status='Approved').all()
-
     return render_template('view_assets.html', approved_assets=approved_assets)
-
-
-@app.route('/view_asset/<int:asset_id>')
-def view_asset(asset_id):
-    # Retrieve the asset from the database based on its ID
-    asset = PendingAsset.get_asset_by_id(asset_id)
-
-    # Check if the asset exists
-    if asset:
-        return render_template('view_asset.html', asset=asset)
-    else:
-        flash('Asset not found.', 'danger')
-        return redirect(url_for('view_assets'))
 
 @app.route('/delete_asset', methods=['POST'])
 def delete_asset():
@@ -280,34 +274,31 @@ def assetApproval():
         return redirect(url_for('dashboard'))
 
     # Fetch pending assets from the database
-    pending_assets = PendingAsset.query.all()
+    pending_assets = PendingAsset.query.filter_by(status='Pending').all()
 
     return render_template('assetApproval.html', title='Apply Asset', form=form, pending_assets=pending_assets)
 
 
 @app.route('/approve_asset', methods=['POST'])
 def approve_asset():
-    print('HEll')
     asset_id = request.json.get('asset_id')
-    print('Received asset ID:', asset_id)  # Add this line for debugging
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
             asset.status = 'Approved'
-            db.session.commit()
-            return jsonify({'success': True, 'asset': asset.to_dict()}), 200
+            db.session.commit()  # Commit changes to the database
+            return jsonify({'success': True}), 200
     return jsonify({'success': False}), 400
 
 @app.route('/reject_asset', methods=['POST'])
 def reject_asset():
     asset_id = request.json.get('asset_id')
-    print('Received asset ID:', asset_id)  # Add this line for debugging
     if asset_id:
         asset = PendingAsset.query.get(asset_id)
         if asset:
             asset.status = 'Rejected'
-            db.session.commit()
-            return jsonify({'success': True, 'asset': asset.to_dict()}), 200
+            db.session.commit()  # Commit changes to the database
+            return jsonify({'success': True}), 200
     return jsonify({'success': False}), 400
 
 

@@ -18,24 +18,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // New script for User-Admin-Approval functionality
-    function loadUserApprovalData() {
-        // This function should contain the same code as the one in user_admin_approval.html
-        // to fetch and display user data for approval
-        // ...
-    }
-
-    function approveUser(userId) {
-        // This function should contain the same code as the one in user_admin_approval.html
-        // to handle user approval (server-side logic)
-        // ...
-    }
-
-    function rejectUser(userId) {
-        // This function should contain the same code as the one in user_admin_approval.html
-        // to handle user rejection (server-side logic)
-        // ...
-    }
 
     // Function to handle asset action (approve/reject)
     function handleAssetAction(assetId, action) {
