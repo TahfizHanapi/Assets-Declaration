@@ -1,7 +1,7 @@
 import secrets
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, escape
-from markupsafe import escape
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from werkzeug.utils import escape
 import mysql.connector
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
@@ -14,7 +14,7 @@ from wtforms.validators import DataRequired
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': 'Azib_2002',
     'database': 'assets'
 }
 

@@ -1,12 +1,3 @@
-/*!
-    * Start Bootstrap - SB Admin v7.0.7 (https://startbootstrap.com/template/sb-admin)
-    * Copyright 2013-2023 Start Bootstrap
-    * Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-sb-admin/blob/master/LICENSE)
-    */
-//
-// Scripts
-// 
-
 document.addEventListener('DOMContentLoaded', function () {
     // Toggle the side navigation
     const sidebarToggle = document.body.querySelector('#sidebarToggle');
@@ -18,6 +9,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // New script for User-Admin-Approval functionality
+    function loadUserApprovalData() {
+        // This function should contain the same code as the one in user_admin_approval.html
+        // to fetch and display user data for approval
+        // ...
+    }
+
+    function approveUser(userId) {
+        // This function should contain the same code as the one in user_admin_approval.html
+        // to handle user approval (server-side logic)
+        // ...
+    }
+
+    function rejectUser(userId) {
+        // This function should contain the same code as the one in user_admin_approval.html
+        // to handle user rejection (server-side logic)
+        // ...
+    }
 
     // Function to handle asset action (approve/reject)
     function handleAssetAction(assetId, action) {
