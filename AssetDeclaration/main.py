@@ -1,14 +1,19 @@
 import secrets
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
 from werkzeug.utils import escape
 import mysql.connector
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from flask_bcrypt import check_password_hash
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import SubmitField, StringField, TextAreaField
-from wtforms.validators import DataRequired
+from wtforms import PasswordField, SubmitField, StringField, TextAreaField
+from wtforms.validators import DataRequired, Email, EqualTo
+import random
+import string
+from flask_mail import Mail, Message
+
 
 # MySQL database configuration
 db_config = {
@@ -29,11 +34,19 @@ bcrypt = Bcrypt(app)
 
 users = {}
 
+mail = Mail(app)
+class PasswordResetForm(FlaskForm):
+    new_password = PasswordField('New Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('new_password')])
+    submit = SubmitField('Reset Password')
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+
+    # Establish the relationship with PendingAsset
+    assets = db.relationship('PendingAsset', backref='user_assets', lazy=True)
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,6 +63,10 @@ class PendingAsset(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     value = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='Pending')
+
+    # New column to associate the asset with a user
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='user_assets', lazy=True)
 
 app.secret_key = secrets.token_hex(16)
 app.config['SECRET_KEY'] = secrets.token_hex(16)
@@ -105,13 +122,14 @@ def login():
             return render_template('login.html', message='Invalid email or password.')
 
         # Check if the password matches the hashed password in the database
-        if not check_password_hash(user.password, password):
+        if not bcrypt.check_password_hash(user.password, password):
             return render_template('login.html', message='Invalid email or password.')
 
         # Store the user id in the session and redirect to the main page
         session['user_id'] = user.id
         session['name'] = user.name
         return redirect(url_for('dashboard'))
+
     return render_template('login.html')
 
 @app.route('/adminlogin', methods=['GET', 'POST'])
@@ -148,7 +166,7 @@ def adminlogin():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-
+    user_id = session.get('user_id')
     user_name = session.get('name')
 
     if request.method == 'POST':
@@ -169,46 +187,58 @@ def dashboard():
             location=location,
             purchase_date=purchase_date,
             quantity=quantity,
-            value=value
+            value=value,
+            user_id=user_id  # Associate the asset with the current user
         )
         db.session.add(pending_asset)
         db.session.commit()
         flash('Asset registration application submitted successfully!')
         return redirect(url_for('dashboard'))
-    return render_template('dashboard.html', user_name=user_name)
+
+    return render_template('dashboard.html', user_name=user_name, user_id=user_id)
 
 
 @app.route('/view_assets')
 def view_assets():
-
+    user_id = session.get('user_id')
     user_name = session.get('name')
 
-    approved_assets = PendingAsset.query.filter_by(status='Approved').all()
-    return render_template('view_assets.html', approved_assets=approved_assets, user_name=user_name)
+    # Debugging: Print user_id
+    print("User ID:", user_id)
+
+    # Check if the user exists in the database
+    user = User.query.get(user_id)
+    if user:
+        # Update the query to use the correct relationship and filter by status
+        print("User ID:", user_id)
+        user_assets = PendingAsset.query.filter_by(user_id=user_id, status='Approved').all()
+        print("User Assets:", user_assets)
+
+        return render_template('view_assets.html', approved_assets=user_assets, user_name=user_name)
+    else:
+        # Handle the case where the user does not exist (e.g., redirect or display an error message)
+        flash('User not found.', 'error')
+        return redirect(url_for('login'))
 
 @app.route('/delete_asset', methods=['POST'])
 def delete_asset():
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
+    asset_name = request.json.get('asset_name')
+    if not asset_name:
+        return jsonify({'success': False, 'error': 'Asset name is missing in the request.'}), 400
 
     try:
-        asset_name = request.json.get('asset_name')
-        if not asset_name:
-            raise ValueError("Asset name is missing in the request.")
-
-        # Use parameterized query to avoid SQL injection
-        sql = "DELETE FROM assets WHERE asset_name = %s"
-        cursor.execute(sql, (asset_name,))
-        connection.commit()
-
-        return jsonify({'success': True}), 200
+        # Use SQLAlchemy to query and delete the asset
+        asset = PendingAsset.query.filter_by(asset_name=asset_name).first()
+        if asset:
+            db.session.delete(asset)
+            db.session.commit()
+            return jsonify({'success': True}), 200
+        else:
+            return jsonify({'success': False, 'error': 'Asset not found.'}), 404
     except Exception as e:
         print("Error:", str(e))
-        connection.rollback()
+        db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        cursor.close()
-        connection.close()
 
 
 @app.route('/logout')
@@ -322,6 +352,31 @@ def reject_asset():
             return jsonify({'success': True}), 200
     return jsonify({'success': False}), 400
 
+@app.route('/reset_password/<int:user_id>', methods=['GET', 'POST'])
+def reset_password(user_id):
+    user = User.query.get(user_id)
+
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('login'))
+
+    form = PasswordResetForm()
+
+    if form.validate_on_submit():
+        new_password = form.new_password.data
+        confirm_password = form.confirm_password.data
+
+        if new_password == confirm_password:
+            # Update the user's password in the database
+            user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+            db.session.commit()
+
+            flash('Your password has been successfully reset.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Passwords do not match.', 'error')
+
+    return render_template('reset_password.html', form=form, user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)
